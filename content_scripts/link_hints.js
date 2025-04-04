@@ -1061,11 +1061,14 @@ const LocalHints = {
     let possibleFalsePositive = false;
     const hints = [];
     const imageMapAreas = [];
+
     let reason = null;
 
+    let extra = false;
     // Insert area elements that provide click functionality to an img.
     if (tagName === "img") {
       let mapName = element.getAttribute("usemap");
+      isClickable = true;
       if (mapName) {
         const imgClientRects = element.getClientRects();
         mapName = mapName.replace(/^#/, "").replace('"', '\\"');
@@ -1156,6 +1159,7 @@ const LocalHints = {
       }
     }
 
+    const className = element.getAttribute("class");
     // Check for tagNames which are natively clickable.
     switch (tagName) {
       case "a":
@@ -1204,6 +1208,12 @@ const LocalHints = {
           (element.clientHeight < element.scrollHeight) && Scroller.isScrollableElement(element)
             ? (reason = "Scroll.")
             : undefined;
+        if(className?.startsWith("_pOne")){
+          isClickable=true;
+        }
+        if(className?.startsWith("_countersCover")){
+            isClickable=true;
+        }
         break;
       case "details":
         isClickable = true;
@@ -1218,7 +1228,6 @@ const LocalHints = {
     // An element with a class name containing the text "button" might be clickable. However, real
     // clickables are often wrapped in elements with such class names. So, when we find clickables
     // based only on their class name, we mark them as unreliable.
-    const className = element.getAttribute("class");
     if (!isClickable && className?.toLowerCase().includes("button")) {
       isClickable = true;
       possibleFalsePositive = true;
@@ -1232,7 +1241,6 @@ const LocalHints = {
       isClickable = true;
       onlyHasTabIndex = true;
     }
-
     if (isClickable) {
       // An image map has multiple clickable areas, and so can represent multiple LocalHints.
       if (imageMapAreas.length > 0) {
@@ -1259,10 +1267,12 @@ const LocalHints = {
             reason,
           });
           hints.push(hint);
-        }
-      }
+        }      }
     }
 
+if(isClickable){
+      console.log(className);
+    }
     return hints;
   },
 
@@ -1320,13 +1330,25 @@ const LocalHints = {
     // NOTE(mrmr1993): Our previous method (combined XPath and DOM traversal for jsaction) couldn't
     // provide this, so it's necessary to check whether elements are clickable in order, as we do
     // below.
+    //
+        // console.log(localHints);
     for (const element of Array.from(elements)) {
+
+      let url = element.getAttribute("src");
       if (!requireHref || !!element.href) {
+
+        if(url)
+      {
+          // console.log(url, element.getAttribute("class"));
+        }
+
         const hints = this.getLocalHintsForElement(element);
         localHints.push(...hints);
       }
     }
 
+
+        console.log(localHints);
     // Traverse the DOM from descendants to ancestors, so later elements show above earlier elements.
     localHints = localHints.reverse();
 
